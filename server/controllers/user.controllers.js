@@ -3,7 +3,8 @@ import User from "../models/user.model.js"
 
 export const getCurrentUser = async (req, res) => {
     try {
-        const token = req.cookies?.token
+        const authHeader = req.headers.authorization
+        const token = req.cookies?.token || (authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null)
         if (!token) {
             return res.status(200).json(null)
         }
@@ -12,7 +13,8 @@ export const getCurrentUser = async (req, res) => {
         if (!user) {
             return res.status(200).json(null)
         }
-        return res.status(200).json(user)
+        const userObj = user.toObject ? user.toObject() : JSON.parse(JSON.stringify(user))
+        return res.status(200).json({ ...userObj, token })
     } catch (error) {
         return res.status(200).json(null)
     }

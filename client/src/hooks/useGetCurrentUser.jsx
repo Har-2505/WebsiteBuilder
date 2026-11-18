@@ -1,23 +1,36 @@
 import axios from 'axios'
-import React from 'react'
 import { useEffect } from 'react'
 import { serverUrl } from '../App'
 import { useDispatch } from 'react-redux'
 import { setUserData } from '../redux/userSlice'
 
 function useGetCurrentUser() {
-    const dispatch=useDispatch()
+    const dispatch = useDispatch()
     useEffect(() => {
         const getCurrentUser = async () => {
             try {
-              const result=await axios.get(`${serverUrl}/api/user/me`,{withCredentials:true})
-              dispatch(setUserData(result.data))
+                const token = localStorage.getItem("token")
+                const result = await axios.get(`${serverUrl}/api/user/me`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    withCredentials: true
+                })
+                if (result.data) {
+                    if (result.data.token) {
+                        localStorage.setItem("token", result.data.token)
+                    }
+                    dispatch(setUserData(result.data))
+                } else {
+                    localStorage.removeItem("token")
+                    dispatch(setUserData(null))
+                }
             } catch (error) {
-console.log(error)
+                console.error("Get current user error:", error)
+                localStorage.removeItem("token")
+                dispatch(setUserData(null))
             }
         }
         getCurrentUser()
-    }, [])
+    }, [dispatch])
 }
 
 export default useGetCurrentUser
