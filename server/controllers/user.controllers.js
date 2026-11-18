@@ -1,13 +1,19 @@
-import { generateResponse } from "../config/openRouter.js"
-import extractJson from "../utils/extractJson.js"
+import jwt from "jsonwebtoken"
+import User from "../models/user.model.js"
 
-export const getCurrentUser=async (req,res)=>{
+export const getCurrentUser = async (req, res) => {
     try {
-        if(!req.user){
-            return res.json({user:null})
+        const token = req.cookies?.token
+        if (!token) {
+            return res.status(200).json(null)
         }
-        return res.json(req.user)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const user = await User.findById(decoded.id)
+        if (!user) {
+            return res.status(200).json(null)
+        }
+        return res.status(200).json(user)
     } catch (error) {
-        return res.status(500).json({message:`get current user error ${error}`})
+        return res.status(200).json(null)
     }
 }
